@@ -4,7 +4,7 @@ from torchsummary import summary
 import torch
 
 class my_resnet(nn.Module):
-    def __init__(self, num_classes = 2):
+    def __init__(self, num_classes = 3):
         super().__init__()
         self.backbone = resnet50(weights = ResNet50_Weights.DEFAULT)
         self.backbone.fc = nn.Identity()    # bo classifier

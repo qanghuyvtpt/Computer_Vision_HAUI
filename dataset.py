@@ -7,8 +7,8 @@ import numpy as np
 from PIL import Image
 from torchvision.transforms import Compose, Resize, ToTensor, Normalize
 from torchvision.transforms import ToPILImage
-class AnimalDataset(Dataset):
 
+class AnimalDataset(Dataset):
     def __init__(self, root,train = True, transform = None):
 
         self.root = os.path.join(root, 'Animal_dataset')
@@ -46,12 +46,12 @@ if __name__ == "__main__":
         Resize((224, 224)),
         ToTensor(),
     ])
-    dataset = AnimalDataset(root="./data", train=True, transform=transform)
-    image, label = dataset.__getitem__(2005)
-    img_pil = ToPILImage()(image)
-    img_pil.show()
-    print(image.shape)
-    print(label)
+    dataset = AnimalDataset(root=r"C:\Users\Admin\Desktop\ki6\xu_ly_anh_so", train=True, transform=transform)
+    # image, label = dataset.__getitem__(12)
+    # img_pil = ToPILImage()(image)
+    # # img_pil.show()
+    # print(image.shape)
+    # print(label)
 
     train_dataloader = DataLoader(
         dataset=dataset,

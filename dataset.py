@@ -18,7 +18,7 @@ class AnimalDataset(Dataset):
             self.root = os.path.join(self.root,'train')
 
         else:
-            self.root = os.path.join(self.root,'test')
+            self.root = os.path.join(self.root,'val')
         categories  = (os.listdir(self.root))
         self.labels = []
         self.images = []

@@ -5,7 +5,7 @@ CATEGORY_MAP = {'1': 'animal', '2': 'person', '3': 'vehicle'}
 
 # Đọc ảnh
 img_bgr = cv2.imread(
-    r"C:\Users\Admin\Desktop\ki6\xu_ly_anh_so\Animal_dataset\train\herbivore\antelope__antelope_10230.jpg"
+    r"C:\Users\Admin\Desktop\PythonProject\Xu_ly_anh_so_HAUI\image_test\Screenshot_2.png"
 )
 
 # MegaDetector cần RGB

@@ -1,6 +1,6 @@
 from torchvision.models import mobilenet_v2, MobileNet_V2_Weights
 import torch.nn as nn
-from torchsummary import summary
+# from torchsummary import summary
 import torch
 
 class my_model(nn.Module):
@@ -30,4 +30,4 @@ if __name__ == '__main__':
     model = my_model().to(device)
 
 
-    summary(model, input_size=(3,224,224))
+    # summary(model, input_size=(3,224,224))

@@ -9,14 +9,14 @@ from model import my_model
 
 IMAGE_PATH      = r"./image_test/Screenshot_1.png"
 CHECKPOINT_PATH = r"./train_model/best_animal_classifier.pt"
-DET_CONF        = 0.5    # ngưỡng MegaDetector
-CLS_CONF        = 0.0    # ngưỡng classifier (0 = hiện tất cả)
+DET_CONF        = 0.5
+CLS_CONF        = 0.0
 
 CLASS_NAMES  = ['carnivore', 'herbivore', 'omnivore']
-CLASS_COLORS = {                  # BGR
-    'carnivore': (0,  60, 220),   # đỏ
-    'herbivore': (0, 200,  80),   # xanh lá
-    'omnivore':  (20, 180, 220),  # xanh dương
+CLASS_COLORS = {
+    'carnivore': (0,  60, 220),
+    'herbivore': (0, 200,  80),
+    'omnivore':  (20, 180, 220),
 }
 CATEGORY_MAP = {'1': 'animal', '2': 'person', '3': 'vehicle'}
 
@@ -46,7 +46,7 @@ print(f"\nMegaDetector: {len(detections)} objects found\n")
 for i, det in enumerate(detections):
     category = det['category']
     conf     = det['conf']
-    bbox     = det['bbox']   # [x, y, w, h] normalized
+    bbox     = det['bbox']   
 
     print(f"[{i}] category={CATEGORY_MAP.get(category,'?')}  det_conf={conf:.3f}")
 

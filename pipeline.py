@@ -10,7 +10,7 @@ from model import my_model
 # ═══════════════════════════════════════════════
 #  CẤU HÌNH
 # ═══════════════════════════════════════════════
-IMAGE_PATH      = r"C:\Users\Admin\Desktop\PythonProject\Xu_ly_anh_so_HAUI\image_test\Screenshot_1.png"
+IMAGE_PATH      = r"./image_test/Screenshot_1.png"
 CHECKPOINT_PATH = r"./train_model/best_animal_classifier.pt"
 DET_CONF        = 0.5    # ngưỡng MegaDetector
 CLS_CONF        = 0.0    # ngưỡng classifier (0 = hiện tất cả)

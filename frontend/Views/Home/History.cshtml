@@ -1,0 +1,371 @@
+﻿@model List<btlon.Models.ClassifyHistory>
+@{ ViewData["Title"] = "Lịch Sử Phân Loại"; }
+
+<div class="container z1" style="max-width:960px">
+
+    <!-- TIÊU ĐỀ + NÚT XÓA -->
+    <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3">
+        <div>
+            <div class="page-title">
+                <i class="bi bi-clock-history" style="color:var(--herb)"></i>
+                Lịch sử phân loại
+            </div>
+            <div class="page-sub">@Model.Count lần đã phân tích</div>
+        </div>
+        @if (Model.Any())
+        {
+            <form method="post" asp-action="ClearHistory"
+                  onsubmit="return confirm('Xóa toàn bộ lịch sử?')">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn-danger-soft">
+                    <i class="bi bi-trash3-fill"></i> Xóa tất cả
+                </button>
+            </form>
+        }
+    </div>
+
+    <!-- FILTER -->
+    <div class="filter-bar mb-3">
+        <a class="filter-btn @(ViewBag.Filter=="all"?"active-all":"")"
+           href="@Url.Action("History","Home",new{filter="all"})">
+            <i class="bi bi-grid-3x3-gap-fill"></i> Tất cả
+        </a>
+        <a class="filter-btn @(ViewBag.Filter=="herb"?"active-herb":"")"
+           href="@Url.Action("History","Home",new{filter="herb"})">🌿 Ăn cỏ</a>
+        <a class="filter-btn @(ViewBag.Filter=="carn"?"active-carn":"")"
+           href="@Url.Action("History","Home",new{filter="carn"})">🥩 Ăn thịt</a>
+        <a class="filter-btn @(ViewBag.Filter=="omni"?"active-omni":"")"
+           href="@Url.Action("History","Home",new{filter="omni"})">🍽️ Tạp ăn</a>
+    </div>
+
+    <!-- TRỐNG -->
+    @if (!Model.Any())
+    {
+        <div class="hist-empty">
+            <div class="e-icon">🔍</div>
+            <p>Chưa có kết quả nào. Hãy upload ảnh đầu tiên!</p>
+            <a asp-action="Index" class="btn-retry mt-2">
+                <i class="bi bi-upload"></i> Upload ảnh ngay
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="hist-list" id="histList">
+            @foreach (var item in Model)
+            {
+                <!-- ═══ ROW CHÍNH ═══ -->
+                <div class="hist-item @item.TypeClass"
+                     id="row-@item.Id"
+                     onclick="toggleDetail(@item.Id, this)"
+                     style="cursor:pointer">
+
+                    @if (!string.IsNullOrEmpty(item.ImagePath))
+                    {
+                        <img class="hist-thumb" src="@item.ImagePath" alt="Ảnh" />
+                    }
+                    else
+                    {
+                        <div class="hist-icon-fallback">@item.TypeIcon</div>
+                    }
+
+                    <div class="hist-meta">
+                        <div class="hist-name">@item.PredictedLabel</div>
+                        <div class="hist-time">
+                            <i class="bi bi-clock me-1"></i>
+                            @item.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                            &nbsp;·&nbsp;
+                            <i class="bi bi-bounding-box me-1"></i>
+                            @item.BoxCount con
+                        </div>
+                    </div>
+
+                    <span class="hist-badge @item.TypeClass">@item.PredictedLabel</span>
+                    <span class="hist-conf @item.TypeClass">@item.ConfidencePercent</span>
+
+                    <!-- Mũi tên expand -->
+                    <span class="hist-chevron" id="chev-@item.Id">
+                        <i class="bi bi-chevron-down"></i>
+                    </span>
+
+                    <!-- Nút xóa (ngăn click nổi bong bóng) -->
+                    <form method="post" asp-action="Delete"
+                          style="margin:0" onclick="event.stopPropagation()">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@item.Id" />
+                        <button type="submit" class="hist-del-btn" title="Xóa">
+                            <i class="bi bi-trash3"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- ═══ PANEL CHI TIẾT (ẩn mặc định) ═══ -->
+                <div class="hist-detail-panel" id="detail-@item.Id">
+                    <div class="hdp-inner">
+                        <div class="hdp-loading" id="loading-@item.Id">
+                            <div class="hdp-spinner"></div>
+                            <span>Đang tải...</span>
+                        </div>
+                        <div class="hdp-content" id="content-@item.Id" style="display:none"></div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     CSS bổ sung cho History detail
+══════════════════════════════════════════════════════ -->
+<style>
+/* Chevron */
+.hist-chevron {
+    font-size: .85rem; color: var(--txt3);
+    transition: transform .25s; flex-shrink: 0;
+    display: flex; align-items: center;
+}
+.hist-item.expanded .hist-chevron { transform: rotate(180deg); color: var(--txt2); }
+.hist-item.expanded { border-color: var(--border2) !important; }
+
+/* Panel chi tiết */
+.hist-detail-panel {
+    max-height: 0; overflow: hidden;
+    transition: max-height .35s cubic-bezier(.4,0,.2,1);
+    margin-bottom: 0;
+}
+.hist-detail-panel.open {
+    max-height: 1200px;
+    margin-bottom: .45rem;
+}
+.hdp-inner {
+    background: rgba(255,255,255,.025);
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 14px 14px;
+    padding: 1rem 1.1rem 1.1rem;
+}
+
+/* Spinner */
+.hdp-loading {
+    display: flex; align-items: center; gap: .6rem;
+    color: var(--txt2); font-size: .85rem; padding: .5rem 0;
+}
+.hdp-spinner {
+    width: 18px; height: 18px; border-radius: 50%;
+    border: 2px solid rgba(61,220,107,.2);
+    border-top-color: var(--herb);
+    animation: spin .7s linear infinite; flex-shrink: 0;
+}
+
+/* Header detail */
+.hdp-header {
+    display: flex; align-items: center; gap: 1rem;
+    flex-wrap: wrap; margin-bottom: .9rem;
+    padding-bottom: .75rem; border-bottom: 1px solid var(--border);
+}
+.hdp-img {
+    width: 90px; height: 70px; object-fit: cover;
+    border-radius: 8px; border: 1px solid var(--border);
+    flex-shrink: 0;
+}
+.hdp-img-placeholder {
+    width: 90px; height: 70px; border-radius: 8px;
+    background: var(--bg3); display: flex; align-items: center;
+    justify-content: center; font-size: 2rem; flex-shrink: 0;
+}
+.hdp-title { font-size: .95rem; font-weight: 600; color: var(--txt); }
+.hdp-subtitle { font-size: .75rem; color: var(--txt3); margin-top: .15rem; }
+.hdp-best-conf { margin-left: auto; text-align: right; }
+.hdp-best-conf .bnum { font-size: 1.6rem; font-weight: 800; line-height: 1; }
+.hdp-best-conf .blbl { font-size: .68rem; color: var(--txt3); }
+
+/* Box list trong detail */
+.hdp-box-list { display: flex; flex-direction: column; gap: .4rem; }
+.hdp-box-title {
+    font-size: .7rem; font-weight: 600; color: var(--txt2);
+    text-transform: uppercase; letter-spacing: .5px;
+    margin-bottom: .5rem; display: flex; align-items: center; gap: .4rem;
+}
+
+.hdp-box-item {
+    display: flex; align-items: center; gap: .75rem;
+    padding: .55rem .85rem;
+    background: rgba(255,255,255,.03);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    position: relative; overflow: hidden;
+    transition: border-color .15s;
+}
+.hdp-box-item::before {
+    content: ''; position: absolute;
+    left: 0; top: 0; bottom: 0; width: 3px; border-radius: 3px 0 0 3px;
+}
+.hdp-box-item.herbivore::before { background: var(--herb); }
+.hdp-box-item.carnivore::before { background: var(--carn); }
+.hdp-box-item.omnivore::before  { background: var(--omni); }
+.hdp-box-item.herbivore:hover   { border-color: rgba(61,220,107,.3); }
+.hdp-box-item.carnivore:hover   { border-color: rgba(255,82,82,.3); }
+.hdp-box-item.omnivore:hover    { border-color: rgba(255,167,38,.3); }
+
+.hdp-idx {
+    width: 24px; height: 24px; border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .72rem; font-weight: 700; flex-shrink: 0;
+}
+.hdp-idx.herbivore { background: rgba(61,220,107,.15); color: var(--herb); }
+.hdp-idx.carnivore { background: rgba(255,82,82,.15);  color: var(--carn); }
+.hdp-idx.omnivore  { background: rgba(255,167,38,.15); color: var(--omni); }
+
+.hdp-emoji { font-size: 1.25rem; flex-shrink: 0; }
+
+.hdp-bar-wrap { flex: 1; }
+.hdp-pill {
+    font-size: .73rem; font-weight: 700; padding: .15rem .6rem;
+    border-radius: 20px; display: inline-block; margin-bottom: .25rem;
+}
+.hdp-pill.herbivore { background: rgba(61,220,107,.12); color: var(--herb); border: 1px solid rgba(61,220,107,.25); }
+.hdp-pill.carnivore { background: rgba(255,82,82,.12);  color: var(--carn); border: 1px solid rgba(255,82,82,.25); }
+.hdp-pill.omnivore  { background: rgba(255,167,38,.12); color: var(--omni); border: 1px solid rgba(255,167,38,.25); }
+
+.hdp-bar-track { height: 5px; background: rgba(255,255,255,.06); border-radius: 3px; overflow: hidden; }
+.hdp-bar-fill  { height: 100%; border-radius: 3px; transition: width .8s cubic-bezier(.4,0,.2,1); }
+.hdp-bar-fill.herbivore { background: linear-gradient(90deg,var(--herb2),var(--herb)); }
+.hdp-bar-fill.carnivore { background: linear-gradient(90deg,var(--carn2),var(--carn)); }
+.hdp-bar-fill.omnivore  { background: linear-gradient(90deg,var(--omni2),var(--omni)); }
+
+.hdp-conf-num { font-size: .9rem; font-weight: 800; min-width: 48px; text-align: right; flex-shrink: 0; }
+.hdp-conf-num.herbivore { color: var(--herb); }
+.hdp-conf-num.carnivore { color: var(--carn); }
+.hdp-conf-num.omnivore  { color: var(--omni); }
+
+/* Summary chips */
+.hdp-summary { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: .75rem; padding-top: .75rem; border-top: 1px solid var(--border); }
+.hdp-chip { font-size: .78rem; font-weight: 500; padding: .3rem .8rem; border-radius: 20px; }
+.hdp-chip.herbivore { background: rgba(61,220,107,.1); color: var(--herb); border: 1px solid rgba(61,220,107,.2); }
+.hdp-chip.carnivore { background: rgba(255,82,82,.1);  color: var(--carn); border: 1px solid rgba(255,82,82,.2); }
+.hdp-chip.omnivore  { background: rgba(255,167,38,.1); color: var(--omni); border: 1px solid rgba(255,167,38,.2); }
+</style>
+
+@section Scripts {
+<script>
+// Track trạng thái mở/đóng và cache data
+const _opened  = {};   // id → true/false
+const _cache   = {};   // id → data JSON
+
+async function toggleDetail(id, rowEl) {
+    const panel   = document.getElementById('detail-' + id);
+    const loadEl  = document.getElementById('loading-' + id);
+    const contEl  = document.getElementById('content-' + id);
+    const isOpen  = _opened[id];
+
+    if (isOpen) {
+        // ── Đóng ──
+        panel.classList.remove('open');
+        rowEl.classList.remove('expanded');
+        _opened[id] = false;
+        return;
+    }
+
+    // ── Mở ──
+    panel.classList.add('open');
+    rowEl.classList.add('expanded');
+    _opened[id] = true;
+
+    // Đã có cache → hiện luôn, không fetch lại
+    if (_cache[id]) {
+        renderDetail(id, _cache[id], loadEl, contEl);
+        return;
+    }
+
+    // Fetch từ server
+    loadEl.style.display = 'flex';
+    contEl.style.display = 'none';
+    try {
+        const res  = await fetch(`/Home/HistoryDetail?id=${id}`);
+        if (!res.ok) throw new Error('Không tải được dữ liệu');
+        const data = await res.json();
+        _cache[id] = data;
+        renderDetail(id, data, loadEl, contEl);
+    } catch (e) {
+        loadEl.innerHTML = `<span style="color:var(--carn)"><i class="bi bi-exclamation-circle me-1"></i>${e.message}</span>`;
+    }
+}
+
+function renderDetail(id, data, loadEl, contEl) {
+    loadEl.style.display = 'none';
+
+    // ── Header ──
+    const imgHtml = data.imagePath
+        ? `<img class="hdp-img" src="${data.imagePath}" alt="Ảnh">`
+        : `<div class="hdp-img-placeholder">🖼️</div>`;
+
+    // Best box để lấy màu header
+    const bestBox   = data.boxes.length ? data.boxes.reduce((a,b) => a.confRaw > b.confRaw ? a : b) : null;
+    const bestClass = bestBox ? bestBox.typeClass : 'herbivore';
+    const bestConf  = bestBox ? bestBox.confidence : data.confidence;
+
+    // ── Danh sách từng con ──
+    const boxRows = data.boxes.map(b => `
+        <div class="hdp-box-item ${b.typeClass}">
+            <div class="hdp-idx ${b.typeClass}">${b.idx}</div>
+            <div class="hdp-emoji">${b.typeEmoji}</div>
+            <div class="hdp-bar-wrap">
+                <span class="hdp-pill ${b.typeClass}">${b.typeEmoji} ${b.labelVi}</span>
+                <div class="hdp-bar-track">
+                    <div class="hdp-bar-fill ${b.typeClass}"
+                         style="width:0%"
+                         data-w="${(b.confRaw * 100).toFixed(0)}"></div>
+                </div>
+            </div>
+            <div class="hdp-conf-num ${b.typeClass}">${b.confidence}</div>
+        </div>
+    `).join('');
+
+    // ── Tổng hợp theo loại ──
+    const counts = {};
+    data.boxes.forEach(b => { counts[b.typeClass] = (counts[b.typeClass]||0) + 1; });
+    const chips = Object.entries(counts).map(([cls, cnt]) => {
+        const emoji = cls==='herbivore'?'🌿':cls==='carnivore'?'🥩':'🍽️';
+        const label = cls==='herbivore'?'Ăn cỏ':cls==='carnivore'?'Ăn thịt':'Tạp ăn';
+        return `<span class="hdp-chip ${cls}">${emoji} ${label} ×${cnt}</span>`;
+    }).join('');
+
+    contEl.innerHTML = `
+        <div class="hdp-header">
+            ${imgHtml}
+            <div>
+                <div class="hdp-title">${data.label}</div>
+                <div class="hdp-subtitle">
+                    <i class="bi bi-clock me-1"></i>${data.createdAt}
+                    &nbsp;·&nbsp;
+                    <i class="bi bi-bounding-box me-1"></i>${data.boxCount} con
+                </div>
+            </div>
+            <div class="hdp-best-conf">
+                <div class="bnum" style="color:var(--${bestClass==='herbivore'?'herb':bestClass==='carnivore'?'carn':'omni'})">${bestConf}</div>
+                <div class="blbl">Độ tự tin cao nhất</div>
+            </div>
+        </div>
+
+        ${data.boxes.length > 0 ? `
+        <div class="hdp-box-title">
+            <i class="bi bi-bounding-box"></i>
+            Chi tiết từng đối tượng (${data.boxes.length} con)
+        </div>
+        <div class="hdp-box-list">${boxRows}</div>
+        ` : '<p style="color:var(--txt3);font-size:.83rem">Không có bounding box</p>'}
+
+        ${chips ? `<div class="hdp-summary">${chips}</div>` : ''}
+    `;
+
+    contEl.style.display = 'block';
+
+    // Animate bars sau khi render
+    requestAnimationFrame(() => {
+        contEl.querySelectorAll('.hdp-bar-fill[data-w]').forEach(el => {
+            setTimeout(() => { el.style.width = el.getAttribute('data-w') + '%'; }, 80);
+        });
+    });
+}
+</script>
+}

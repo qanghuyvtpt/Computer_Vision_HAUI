@@ -1,0 +1,218 @@
+﻿@model btlon.Models.AnimalPredictionViewModel
+@{ ViewData["Title"] = "Phân Loại Động Vật"; }
+
+<!-- LOADING OVERLAY -->
+<div id="loading-overlay">
+    <div class="loader-ring"></div>
+    <div class="loader-paws">🐾</div>
+    <div class="loader-text">AI đang phân tích ảnh...</div>
+</div>
+
+<div class="container z1" style="max-width:860px">
+    <div class="wl-card">
+
+        <div class="wl-card-header">
+            <span class="header-icon">🔬</span>
+            <h1>Nhận Diện Động Vật</h1>
+            <p>Upload ảnh — AI phân loại & vẽ bounding box từng con</p>
+        </div>
+
+        <div class="wl-card-body">
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="error-box mb-3">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <span asp-validation-summary="All"></span>
+                </div>
+            }
+
+            <!-- FORM UPLOAD -->
+            <form id="upload-form"
+                  asp-controller="Home"
+                  asp-action="Index"
+                  method="post"
+                  enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+
+                <div id="drop-zone" class="mb-4" onclick="triggerFile()">
+                    <div id="dz-placeholder" class="text-center px-3 py-2">
+                        <div class="dz-icon">📁</div>
+                        <div class="dz-title">Kéo thả ảnh vào đây</div>
+                        <div class="dz-sub mb-2">hoặc <span>click để chọn file</span></div>
+                        <div class="dz-types">JPG · PNG · WEBP · GIF · BMP &nbsp;|&nbsp; Tối đa 10 MB</div>
+                    </div>
+                    <img id="preview-img" src="#" alt="Preview" />
+                    <div id="preview-overlay">
+                        <i class="bi bi-arrow-repeat"></i> Đổi ảnh khác
+                    </div>
+                </div>
+
+                <input type="file" id="file-input" name="ImageFile"
+                       accept="image/*" class="d-none"
+                       onchange="onFileSelected(this)" />
+
+                <div class="text-center">
+                    <button type="submit" id="btn-analyze" class="btn-analyze" disabled>
+                        <i class="bi bi-cpu-fill"></i> Phân Tích Ngay
+                    </button>
+                </div>
+            </form>
+
+            <!-- ═══════════════════════════════════════════════
+                 KẾT QUẢ
+            ═══════════════════════════════════════════════ -->
+            @if (Model.HasResult)
+            {
+                <div class="result-section">
+                    <div class="sec-divider">
+                        Kết quả — phát hiện @Model.DetectionBoxes.Count đối tượng
+                    </div>
+
+                    <!-- CANVAS BOUNDING BOX -->
+                    <div style="position:relative;border-radius:14px;overflow:hidden;
+                                margin-bottom:.75rem;border:2px solid var(--border2);
+                                box-shadow:0 4px 24px rgba(0,0,0,.35)">
+                        <canvas id="det-canvas" style="width:100%;display:block"></canvas>
+                    </div>
+
+                    <!-- LEGEND -->
+                    <div class="det-legend">
+                        <div class="legend-item">
+                            <div class="legend-dot" style="background:#3ddc6b"></div>
+                            <span>Ăn cỏ</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot" style="background:#ff5252"></div>
+                            <span>Ăn thịt</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot" style="background:#ffa726"></div>
+                            <span>Tạp ăn</span>
+                        </div>
+                    </div>
+
+                    <!-- ═══════════════════════════════════════
+                         DANH SÁCH TỪNG CON DETECT ĐƯỢC
+                    ═══════════════════════════════════════ -->
+                    @if (Model.DetectionBoxes.Any())
+                    {
+                        <div class="det-list">
+                            @foreach (var (box, idx) in Model.DetectionBoxes.Select((b, i) => (b, i + 1)))
+                            {
+                                var dc    = box.DietType == btlon.Models.DietType.Carnivore ? "carnivore"
+                                          : box.DietType == btlon.Models.DietType.Omnivore  ? "omnivore"
+                                          : "herbivore";
+                                var emoji = box.DietType == btlon.Models.DietType.Carnivore ? "🥩"
+                                          : box.DietType == btlon.Models.DietType.Omnivore  ? "🍽️"
+                                          : "🌿";
+                                var label = box.DietType == btlon.Models.DietType.Carnivore ? "Ăn thịt"
+                                          : box.DietType == btlon.Models.DietType.Omnivore  ? "Tạp ăn"
+                                          : "Ăn cỏ";
+
+                                <div class="det-item @dc">
+                                    <!-- Index badge -->
+                                    <div class="det-idx @dc">@idx</div>
+
+                                    <!-- Emoji loại -->
+                                    <div class="det-emoji">@emoji</div>
+
+                                    <!-- Label + badge -->
+                                    <div class="det-meta">
+                                        <span class="det-label-pill @dc">@emoji @label</span>
+                                        <div class="det-conf-bar-wrap">
+                                            <div class="det-conf-track">
+                                                <div class="det-conf-fill @dc"
+                                                     data-width="@((int)(box.Confidence * 100))"
+                                                     style="width:0%"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Confidence số -->
+                                    <div class="det-conf-num @dc">
+                                        @($"{box.Confidence * 100:F1}")%
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    <!-- ═══════════════════════════════════════
+                         TỔNG HỢP 3 LOẠI
+                    ═══════════════════════════════════════ -->
+                    @{
+                        var totalBoxes = Model.DetectionBoxes.Count;
+                        var cntHerb = Model.DetectionBoxes.Count(b => b.DietType == btlon.Models.DietType.Herbivore);
+                        var cntCarn = Model.DetectionBoxes.Count(b => b.DietType == btlon.Models.DietType.Carnivore);
+                        var cntOmni = Model.DetectionBoxes.Count(b => b.DietType == btlon.Models.DietType.Omnivore);
+                    }
+                    <div class="summary-row">
+                        @if (cntHerb > 0)
+                        {
+                            <div class="summary-chip herbivore">
+                                🌿 Ăn cỏ &nbsp;<strong>×@cntHerb</strong>
+                            </div>
+                        }
+                        @if (cntCarn > 0)
+                        {
+                            <div class="summary-chip carnivore">
+                                🥩 Ăn thịt &nbsp;<strong>×@cntCarn</strong>
+                            </div>
+                        }
+                        @if (cntOmni > 0)
+                        {
+                            <div class="summary-chip omnivore">
+                                🍽️ Tạp ăn &nbsp;<strong>×@cntOmni</strong>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- ACTIONS -->
+                    <div class="action-row mt-3">
+                        <a asp-action="Index" class="btn-retry">
+                            <i class="bi bi-arrow-counterclockwise"></i> Thử ảnh khác
+                        </a>
+                        <a asp-action="History" class="btn-retry">
+                            <i class="bi bi-clock-history"></i> Lịch sử
+                        </a>
+                        <a asp-action="Info" class="btn-retry">
+                            <i class="bi bi-book"></i> Kiến thức
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Truyền data sang JS để vẽ canvas -->
+                <script>
+                const DET_IMAGE = "@Model.UploadedImagePath";
+                const DET_BOXES = @Html.Raw(
+                    System.Text.Json.JsonSerializer.Serialize(
+                        Model.DetectionBoxes.Select((b, i) => new {
+                            idx  = i + 1,
+                            x    = b.X,
+                            y    = b.Y,
+                            w    = b.Width,
+                            h    = b.Height,
+                            conf = b.Confidence,
+                            diet = b.DietType.ToString().ToLower()
+                        })
+                    )
+                );
+                </script>
+            }
+
+        </div>
+    </div>
+
+    <p class="note-below">
+        <i class="bi bi-cpu" style="color:var(--omni)"></i>
+        @if (ViewBag.UseMock == true)
+        {
+            <text>Đang chạy <strong style="color:var(--omni)">Mock Mode</strong> — dữ liệu giả lập. Đặt <code>ModelApi:UseMock</code> = false và chạy backend Python để dùng AI thật.</text>
+        }
+        else
+        {
+            <text>Đang chạy <strong style="color:var(--herb)">AI Backend</strong> — MegaDetector + MobileNetV2 tại <code>localhost:8000</code></text>
+        }
+    </p>
+</div>

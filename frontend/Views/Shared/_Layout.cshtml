@@ -1,0 +1,82 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — WildLens AI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+
+<!-- BG ORBS -->
+<div class="bg-orb orb-green"></div>
+<div class="bg-orb orb-red"></div>
+<div class="bg-orb orb-gold"></div>
+
+<!-- NAVBAR -->
+<nav class="wl-navbar sticky-top">
+    <div class="container">
+        <a class="wl-brand" href="/">
+            <div class="brand-icon"><i class="bi bi-shield-fill"></i></div>
+            <span class="brand-name">Wild<span class="brand-accent">Lens</span></span>
+        </a>
+
+        <div class="wl-nav-links">
+            <a class="wl-nav-link @(ViewContext.RouteData.Values["action"]?.ToString()=="Index"?"active":"")"
+               href="@Url.Action("Index","Home")">
+                <i class="bi bi-crosshair2"></i>
+                <span>Phân loại</span>
+            </a>
+            <a class="wl-nav-link @(ViewContext.RouteData.Values["action"]?.ToString()=="History"?"active":"")"
+               href="@Url.Action("History","Home")">
+                <i class="bi bi-clock-history"></i>
+                <span>Lịch sử</span>
+            </a>
+            <a class="wl-nav-link @(ViewContext.RouteData.Values["action"]?.ToString()=="Stats"?"active":"")"
+               href="@Url.Action("Stats","Home")">
+                <i class="bi bi-bar-chart-fill"></i>
+                <span>Thống kê</span>
+            </a>
+            <a class="wl-nav-link @(ViewContext.RouteData.Values["action"]?.ToString()=="Info"?"active":"")"
+               href="@Url.Action("Info","Home")">
+                <i class="bi bi-book-fill"></i>
+                <span>Kiến thức</span>
+            </a>
+        </div>
+
+        <div class="wl-nav-right">
+            <span class="mock-pill"><i class="bi bi-cpu-fill"></i> Mock AI</span>
+        </div>
+    </div>
+</nav>
+
+<!-- MAIN -->
+<main class="py-4">
+    @RenderBody()
+</main>
+
+<!-- FOOTER -->
+<footer class="wl-footer">
+    <div class="container text-center">
+        <div class="footer-logo mb-1">🐾 WildLens AI</div>
+        <div class="footer-sub">
+            ASP.NET Core 8 · MVC · Mock AI đang hoạt động
+            · <span class="text-success">Sẵn sàng kết nối model thật</span>
+        </div>
+    </div>
+</footer>
+
+<!-- TOAST -->
+<div class="wl-toast" id="wlToast">
+    <i class="bi bi-check-circle-fill"></i>
+    <span id="wlToastMsg">Thành công!</span>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/js/site.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

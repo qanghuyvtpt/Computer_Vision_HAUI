@@ -7,7 +7,7 @@ from megadetector.detection.run_detector import load_detector
 from model import my_model
 
 
-IMAGE_PATH      = r"./image_test/Screenshot_1.png"
+IMAGE_PATH      = r"./image_test/Screenshot_6.png"
 CHECKPOINT_PATH = r"./train_model/best_animal_classifier.pt"
 DET_CONF        = 0.5
 CLS_CONF        = 0.0
@@ -46,7 +46,7 @@ print(f"\nMegaDetector: {len(detections)} objects found\n")
 for i, det in enumerate(detections):
     category = det['category']
     conf     = det['conf']
-    bbox     = det['bbox']   
+    bbox     = det['bbox']
 
     print(f"[{i}] category={CATEGORY_MAP.get(category,'?')}  det_conf={conf:.3f}")
 

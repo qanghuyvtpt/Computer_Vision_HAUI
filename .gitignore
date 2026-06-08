@@ -4,9 +4,32 @@ data/Animal_dataset/
 
 # ignore model weights
 train_model/*.pt
+*.pt
 
 # ignore tensorboard logs
 tensorboard/events.*
+tensorboard/
 
 # cache
 __pycache__/
+*.pyc
+
+# local environments
+.venv/
+frontend/.venv/
+
+# build outputs
+frontend/bin/
+frontend/obj/
+
+# Visual Studio local files
+.vs/
+frontend/.vs/
+*.csproj.user
+*.suo
+
+# local uploads and temporary files
+frontend/wwwroot/uploads/
+cookies.txt
+page.html
+result.html

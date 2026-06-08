@@ -65,14 +65,14 @@ def train():
         os.mkdir(args.train_model)
     writer = SummaryWriter(args.logging)    # dua duong dan vao trong
 
-    train_dataset = AnimalDataset(root=r"C:\Users\Admin\Desktop\ki6\xu_ly_anh_so", train=True, transform=train_transform)
+    train_dataset = AnimalDataset(root=r"C:\Users\Admin\Desktop\PythonProject\Xu_ly_anh_so_HAUI\data", train=True, transform=train_transform)
     train_dataloader = DataLoader(
         dataset=train_dataset,
         batch_size=batch_size,
         shuffle=True,
         drop_last=True
     )
-    test_dataset = AnimalDataset(root=r"C:\Users\Admin\Desktop\ki6\xu_ly_anh_so", train=False, transform=test_transform)
+    test_dataset = AnimalDataset(root=r"C:\Users\Admin\Desktop\PythonProject\Xu_ly_anh_so_HAUI\data", train=False, transform=test_transform)
     test_dataloader = DataLoader(
         dataset=test_dataset,
         batch_size=batch_size,
@@ -82,7 +82,11 @@ def train():
 
     model = my_model().to(device)
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(params= model.parameters(), lr=1e-3)
+
+    optimizer = torch.optim.Adam(
+        filter(lambda p: p.requires_grad, model.parameters()),
+        lr=1e-4
+    )
 
     if args.checkpoint:
         checkpoint = torch.load(args.checkpoint)

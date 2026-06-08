@@ -12,12 +12,62 @@ CHECKPOINT_PATH = r"./train_model/best_animal_classifier.pt"
 DET_CONF        = 0.5
 CLS_CONF        = 0.0
 
-CLASS_NAMES  = ['carnivore', 'herbivore', 'omnivore']
-CLASS_COLORS = {
+CLASS_NAMES = [
+    'antelope', 'bobcat', 'buffalo', 'cat', 'chimpanzee',
+    'cow', 'deer', 'dog', 'dolphin', 'elephant',
+    'fox', 'giant panda', 'giraffe', 'gorilla', 'grizzly bear',
+    'hamster', 'hippopotamus', 'horse', 'leopard', 'lion',
+    'moose', 'otter', 'ox', 'pig', 'polar bear',
+    'rabbit', 'raccoon', 'rat', 'rhinoceros', 'seal',
+    'sheep', 'squirrel', 'tiger', 'whale', 'wolf', 'zebra'
+]
+
+# Ánh xạ từng loài sang chế độ ăn
+DIET_MAP = {
+    'antelope':     'herbivore',
+    'bobcat':       'carnivore',
+    'buffalo':      'herbivore',
+    'cat':          'carnivore',
+    'chimpanzee':   'omnivore',
+    'cow':          'herbivore',
+    'deer':         'herbivore',
+    'dog':          'omnivore',
+    'dolphin':      'carnivore',
+    'elephant':     'herbivore',
+    'fox':          'omnivore',
+    'giant panda':  'herbivore',
+    'giraffe':      'herbivore',
+    'gorilla':      'herbivore',
+    'grizzly bear': 'omnivore',
+    'hamster':      'omnivore',
+    'hippopotamus': 'herbivore',
+    'horse':        'herbivore',
+    'leopard':      'carnivore',
+    'lion':         'carnivore',
+    'moose':        'herbivore',
+    'otter':        'carnivore',
+    'ox':           'herbivore',
+    'pig':          'omnivore',
+    'polar bear':   'carnivore',
+    'rabbit':       'herbivore',
+    'raccoon':      'omnivore',
+    'rat':          'omnivore',
+    'rhinoceros':   'herbivore',
+    'seal':         'carnivore',
+    'sheep':        'herbivore',
+    'squirrel':     'omnivore',
+    'tiger':        'carnivore',
+    'whale':        'carnivore',
+    'wolf':         'carnivore',
+    'zebra':        'herbivore',
+}
+
+DIET_COLORS = {
     'carnivore': (0,  60, 220),
     'herbivore': (0, 200,  80),
     'omnivore':  (20, 180, 220),
 }
+
 CATEGORY_MAP = {'1': 'animal', '2': 'person', '3': 'vehicle'}
 
 detector = load_detector("MDv5a")
@@ -52,6 +102,7 @@ for i, det in enumerate(detections):
 
     if category != '1' or conf < DET_CONF:
         continue
+
     x1 = max(0, int(bbox[0] * w))
     y1 = max(0, int(bbox[1] * h))
     x2 = min(w, int((bbox[0] + bbox[2]) * w))
@@ -70,13 +121,17 @@ for i, det in enumerate(detections):
         cls_conf = float(probs[pred_idx])
         cls_name = CLASS_NAMES[pred_idx]
 
-    print(f"     → {cls_name}  cls_conf={cls_conf:.3f}")
+    # Ánh xạ loài → chế độ ăn
+    diet  = DIET_MAP.get(cls_name, 'unknown')
+    color = DIET_COLORS.get(diet, (128, 128, 128))
 
-    color = CLASS_COLORS[cls_name]
+    print(f"     → species={cls_name}  diet={diet}  cls_conf={cls_conf:.3f}")
+
     cv2.rectangle(img_bgr, (x1, y1), (x2, y2), color, 2)
 
-    label = f"{cls_name}: {cls_conf:.2f}"
-    font, scale, thick = cv2.FONT_HERSHEY_SIMPLEX, 0.65, 2
+    # Hiển thị cả tên loài lẫn chế độ ăn
+    label = f"{cls_name} ({diet}): {cls_conf:.2f}"
+    font, scale, thick = cv2.FONT_HERSHEY_SIMPLEX, 0.55, 2
     (tw, th), _ = cv2.getTextSize(label, font, scale, thick)
 
     cv2.rectangle(img_bgr,

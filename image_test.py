@@ -9,11 +9,16 @@ from torchvision.datasets import ImageFolder
 from torchvision.transforms import Compose, Normalize, Resize, ToTensor
 from tqdm import tqdm
 from sklearn.metrics import classification_report, confusion_matrix
+from dataset import AnimalDataset
 
 from model import my_model
 
+dataset = AnimalDataset(root=r"C:\Users\Admin\Desktop\PythonProject\Xu_ly_anh_so_HAUI\data",
+                        train=False)
+# CLASS_NAMES = ['carnivore', 'herbivore', 'omnivore']
+CLASS_NAMES = dataset.category
 
-CLASS_NAMES = ['carnivore', 'herbivore', 'omnivore']
+
 IMAGE_TEST = r"./image_test/t1.jpg"
 
 def get_args():
@@ -33,7 +38,7 @@ def get_args():
     parser.add_argument(
         "--data_root",
         "-d",
-        default=r"C:\Users\Admin\Desktop\ki6\xu_ly_anh_so\Animal_dataset\val",
+        default=r"C:\Users\Admin\Desktop\PythonProject\Xu_ly_anh_so_HAUI\data\Animal_dataset\test",
         help="Thu muc test/val co cac folder con herbivore, carnivore, omnivore",
     )
     parser.add_argument("--batch_size", "-b", type=int, default=32)
@@ -60,7 +65,7 @@ def get_transform():
 
 
 def load_model(checkpoint_path, device):
-    model = my_model(num_classes=3).to(device)
+    model = my_model(num_classes=36).to(device)
     checkpoint = torch.load(checkpoint_path, map_location=device)
 
     if isinstance(checkpoint, dict) and "model" in checkpoint:
@@ -154,26 +159,26 @@ def main():
     device = torch.device(args.device)
     model = load_model(args.checkpoint, device)
 
-    if args.image:
-        if not os.path.isfile(args.image):
-            raise FileNotFoundError(f"Khong tim thay anh: {args.image}")
-        predict_image(model, args.image, transform, device)
-        image = cv2.imread(IMAGE_TEST)
-        cv2.imshow("image", image)
-        cv2.waitKey(0)
+    # if args.image:
+    #     if not os.path.isfile(args.image):
+    #         raise FileNotFoundError(f"Khong tim thay anh: {args.image}")
+    #     predict_image(model, args.image, transform, device)
+    #     image = cv2.imread(IMAGE_TEST)
+    #     cv2.imshow("image", image)
+    #     cv2.waitKey(0)
 
-    # if args.data_root:
-    #     data_root = Path(args.data_root)
-    #     if not data_root.is_dir():
-    #         raise FileNotFoundError(f"Khong tim thay thu muc: {args.data_root}")
-    #     evaluate_folder(
-    #         model=model,
-    #         data_root=str(data_root),
-    #         transform=transform,
-    #         batch_size=args.batch_size,
-    #         num_workers=args.num_workers,
-    #         device=device,
-    #     )
+    if args.data_root:
+        data_root = Path(args.data_root)
+        if not data_root.is_dir():
+            raise FileNotFoundError(f"Khong tim thay thu muc: {args.data_root}")
+        evaluate_folder(
+            model=model,
+            data_root=str(data_root),
+            transform=transform,
+            batch_size=args.batch_size,
+            num_workers=args.num_workers,
+            device=device,
+        )
 
 
 if __name__ == "__main__":

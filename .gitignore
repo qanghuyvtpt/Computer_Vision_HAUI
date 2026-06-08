@@ -1,3 +1,7 @@
+
+# Ignore dataset
+data/Animal_dataset/
+
 # ignore model weights
 train_model/*.pt
 

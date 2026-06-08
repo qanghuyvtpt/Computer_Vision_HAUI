@@ -8,7 +8,7 @@ from model import my_model
 
 
 IMAGE_PATH      = r"./image_test/Screenshot_1.png"
-CHECKPOINT_PATH = r"./train_model/best_animal_classifier.pt"
+CHECKPOINT_PATH = r"./train_model/best_animal_classifier_3.pt"
 DET_CONF        = 0.5
 CLS_CONF        = 0.0
 

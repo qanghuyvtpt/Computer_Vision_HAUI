@@ -7,7 +7,7 @@ from megadetector.detection.run_detector import load_detector
 from model import my_model
 
 
-IMAGE_PATH      = r"./image_test/Screenshot_6.png"
+IMAGE_PATH      = r"./image_test/Screenshot_3.png"
 CHECKPOINT_PATH = r"./train_model/best_animal_classifier.pt"
 DET_CONF        = 0.5
 CLS_CONF        = 0.0
@@ -22,7 +22,6 @@ CLASS_NAMES = [
     'sheep', 'squirrel', 'tiger', 'whale', 'wolf', 'zebra'
 ]
 
-# Ánh xạ từng loài sang chế độ ăn
 DIET_MAP = {
     'antelope':     'herbivore',
     'bobcat':       'carnivore',
@@ -61,6 +60,11 @@ DIET_MAP = {
     'wolf':         'carnivore',
     'zebra':        'herbivore',
 }
+
+# Nhóm index theo chế độ ăn (tính 1 lần lúc khởi động)
+DIET_INDICES = {'carnivore': [], 'herbivore': [], 'omnivore': []}
+for idx, name in enumerate(CLASS_NAMES):
+    DIET_INDICES[DIET_MAP[name]].append(idx)
 
 DIET_COLORS = {
     'carnivore': (0,  60, 220),
@@ -116,22 +120,27 @@ for i, det in enumerate(detections):
     tensor  = transform(pil_img).unsqueeze(0).to(device)
 
     with torch.no_grad():
-        probs    = torch.softmax(classifier(tensor), dim=1)[0].cpu()
-        pred_idx = int(torch.argmax(probs))
-        cls_conf = float(probs[pred_idx])
-        cls_name = CLASS_NAMES[pred_idx]
+        probs = torch.softmax(classifier(tensor), dim=1)[0].cpu()
 
-    # Ánh xạ loài → chế độ ăn
-    diet  = DIET_MAP.get(cls_name, 'unknown')
-    color = DIET_COLORS.get(diet, (128, 128, 128))
+    # Tổng xác suất theo từng nhóm chế độ ăn
+    diet_scores = {
+        diet: float(probs[indices].sum())
+        for diet, indices in DIET_INDICES.items()
+    }
 
-    print(f"     → species={cls_name}  diet={diet}  cls_conf={cls_conf:.3f}")
+    best_diet  = max(diet_scores, key=diet_scores.get)
+    best_score = diet_scores[best_diet]
+    color      = DIET_COLORS[best_diet]
+
+    print(f"     → carnivore={diet_scores['carnivore']:.3f}  "
+          f"herbivore={diet_scores['herbivore']:.3f}  "
+          f"omnivore={diet_scores['omnivore']:.3f}  "
+          f"→ {best_diet}")
 
     cv2.rectangle(img_bgr, (x1, y1), (x2, y2), color, 2)
 
-    # Hiển thị cả tên loài lẫn chế độ ăn
-    label = f"{cls_name} ({diet}): {cls_conf:.2f}"
-    font, scale, thick = cv2.FONT_HERSHEY_SIMPLEX, 0.55, 2
+    label = f"{best_diet}: {best_score:.2f}"
+    font, scale, thick = cv2.FONT_HERSHEY_SIMPLEX, 0.65, 2
     (tw, th), _ = cv2.getTextSize(label, font, scale, thick)
 
     cv2.rectangle(img_bgr,

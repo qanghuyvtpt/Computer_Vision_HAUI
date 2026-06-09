@@ -7,7 +7,7 @@ from megadetector.detection.run_detector import load_detector
 from model import my_model
 
 
-IMAGE_PATH      = r"./image_test/Screenshot_3.png"
+IMAGE_PATH      = r"./image_test/Screenshot_6.png"
 CHECKPOINT_PATH = r"./train_model/best_animal_classifier.pt"
 DET_CONF        = 0.5
 CLS_CONF        = 0.0

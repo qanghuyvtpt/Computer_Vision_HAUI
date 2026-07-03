@@ -9,7 +9,7 @@ import os
 import tempfile
 
 
-INPUT_PATH      = r"C:\Users\Admin\Desktop\0621.mp4"   # ảnh (.png/.jpg) hoặc video (.mp4)
+INPUT_PATH      = r"./image_test/Screenshot_6.png"
 CHECKPOINT_PATH = r"./train_model/best_animal_classifier.pt"
 DET_CONF        = 0.5
 CLS_CONF        = 0.0

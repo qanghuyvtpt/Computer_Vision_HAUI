@@ -5,7 +5,7 @@ import random
 # 1. Cấu hình đường dẫn và tham số
 source_dir = 'dataset_goc'  # Thay bằng đường dẫn tới thư mục chứa 50 folder của bạn
 target_dir = 'dataset_da_chia'  # Thư mục mới sẽ được tạo ra
-train_ratio = 0.8  # Tỷ lệ 80/20
+train_ratio = 0.85  # Tỷ lệ 80/20
 
 # Cố định random seed để nếu bạn chạy lại script nhiều lần, kết quả chia vẫn giống hệt nhau
 random.seed(42)
